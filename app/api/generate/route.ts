@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { model, PROMPTS, parseAIResponse } from "@/lib/gemini";
+import { generateWithFallback, PROMPTS, getCurrentModel } from "@/lib/gemini";
 
 // Resume data structure
 interface GeneratedResume {
@@ -87,24 +87,28 @@ Generate a complete resume with all sections. Make it compelling and ATS-friendl
 
     const systemPrompt = PROMPTS.RESUME_GENERATION + RESPONSE_FORMAT;
     
-    const result = await model.generateContent([
+    // Use generateWithFallback for automatic model switching
+    const structuredData = await generateWithFallback<GeneratedResume>(
+      userPrompt,
       systemPrompt,
-      userPrompt
-    ]);
-
-    const responseText = result.response.text();
-    const structuredData = parseAIResponse<GeneratedResume>(responseText);
+      true // JSON mode
+    );
 
     if (!structuredData) {
-      console.error("Failed to parse JSON", responseText);
-      return NextResponse.json({ error: "AI produced invalid JSON", raw: responseText }, { status: 500 });
+      return NextResponse.json({ 
+        error: "AI generation failed after trying all available models",
+        modelUsed: getCurrentModel()
+      }, { status: 500 });
     }
 
-    return NextResponse.json({ data: structuredData });
+    return NextResponse.json({ 
+      data: structuredData,
+      modelUsed: getCurrentModel() // For debugging
+    });
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "AI generation failed";
     console.error("AI Generation Error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, modelUsed: getCurrentModel() }, { status: 500 });
   }
 }

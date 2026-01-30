@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { textModel, PROMPTS } from "@/lib/gemini";
+import { generateWithFallback, PROMPTS, getCurrentModel } from "@/lib/gemini";
 import { ContactInfo, ResumeSection } from "@/types/resume";
 
 function extractResumeContext(sections: ResumeSection[]): string {
@@ -68,18 +68,28 @@ ${jobDescription}
 Write a compelling cover letter that connects the candidate's experience to the job requirements.
 `;
 
-        const result = await textModel.generateContent([
+        // Use generateWithFallback for automatic model switching (text mode)
+        const coverLetter = await generateWithFallback<string>(
+            userPrompt,
             PROMPTS.COVER_LETTER,
-            userPrompt
-        ]);
+            false // Text mode, not JSON
+        );
 
-        const coverLetter = result.response.text().trim();
+        if (!coverLetter) {
+            return NextResponse.json({ 
+                error: "Cover letter generation failed after trying all models",
+                modelUsed: getCurrentModel()
+            }, { status: 500 });
+        }
 
-        return NextResponse.json({ data: coverLetter });
+        return NextResponse.json({ 
+            data: coverLetter,
+            modelUsed: getCurrentModel()
+        });
 
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Cover letter generation failed";
         console.error("Cover Letter Error:", error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json({ error: message, modelUsed: getCurrentModel() }, { status: 500 });
     }
 }

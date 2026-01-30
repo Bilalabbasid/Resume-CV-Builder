@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { textModel } from "@/lib/gemini";
+import { generateWithFallback, getCurrentModel } from "@/lib/gemini";
 
 type EnhancementType = "summary" | "experience" | "skills" | "projects" | "education" | "bullet";
 
@@ -72,14 +72,26 @@ export async function POST(req: NextRequest) {
             }
         }
         
-        const result = await textModel.generateContent([
+        // Use generateWithFallback for automatic model switching (text mode)
+        const enhancedText = await generateWithFallback<string>(
+            `Text to enhance:\n${text}`,
             prompt,
-            `Text to enhance:\n${text}`
-        ]);
+            false // Text mode, not JSON
+        );
 
-        const enhancedText = result.response.text().trim();
+        if (!enhancedText) {
+            // Fallback: Return slightly improved version
+            return NextResponse.json({ 
+                enhancedText: originalText.charAt(0).toUpperCase() + originalText.slice(1) + (originalText.endsWith('.') ? '' : '.'),
+                fallback: true,
+                modelUsed: getCurrentModel()
+            });
+        }
 
-        return NextResponse.json({ enhancedText });
+        return NextResponse.json({ 
+            enhancedText: (enhancedText as string).trim(),
+            modelUsed: getCurrentModel()
+        });
 
     } catch (error: unknown) {
         console.error("Enhancement Error:", error);
@@ -88,10 +100,11 @@ export async function POST(req: NextRequest) {
         if (originalText) {
             return NextResponse.json({ 
                 enhancedText: originalText.charAt(0).toUpperCase() + originalText.slice(1) + (originalText.endsWith('.') ? '' : '.'),
-                fallback: true 
+                fallback: true,
+                modelUsed: getCurrentModel()
             });
         }
         
-        return NextResponse.json({ error: "Enhancement failed" }, { status: 500 });
+        return NextResponse.json({ error: "Enhancement failed", modelUsed: getCurrentModel() }, { status: 500 });
     }
 }

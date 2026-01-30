@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { model, PROMPTS, parseAIResponse } from "@/lib/gemini";
+import { generateWithFallback, PROMPTS, getCurrentModel } from "@/lib/gemini";
 import { ATSScore, Resume, ResumeSection } from "@/types/resume";
 
 function extractResumeText(sections: ResumeSection[]): string {
@@ -74,17 +74,16 @@ No specific JD provided. Score for general ATS best practices.
 Provide detailed scoring and actionable suggestions.
 `;
 
-        const result = await model.generateContent([
+        // Use generateWithFallback for automatic model switching
+        const score = await generateWithFallback<ATSScore>(
+            userPrompt,
             PROMPTS.ATS_SCORING,
-            userPrompt
-        ]);
-
-        const responseText = result.response.text();
-        const score = parseAIResponse<ATSScore>(responseText);
+            true // JSON mode
+        );
 
         if (!score) {
-            console.error("Failed to parse ATS score JSON", responseText);
-            // Return a default score on parse failure
+            console.error("Failed to get ATS score from all models");
+            // Return a default score on complete failure
             return NextResponse.json({ 
                 data: {
                     overall: 70,
@@ -94,15 +93,19 @@ Provide detailed scoring and actionable suggestions.
                     missingKeywords: [],
                     suggestions: ["Add more specific keywords", "Include metrics in your achievements"],
                     redFlags: ["Could not fully analyze - try adding more content"]
-                } 
+                },
+                modelUsed: getCurrentModel()
             });
         }
 
-        return NextResponse.json({ data: score });
+        return NextResponse.json({ 
+            data: score,
+            modelUsed: getCurrentModel()
+        });
 
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "ATS scoring failed";
         console.error("ATS Score Error:", error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json({ error: message, modelUsed: getCurrentModel() }, { status: 500 });
     }
 }

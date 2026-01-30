@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { model } from "@/lib/gemini";
-
+import { generateWithFallback, getCurrentModel } from "@/lib/gemini";
 
 // Increase limit for PDF uploads if needed, but Next.js default is usually fine for resumes.
 // For parsing, we first extract text then ask Gemini to structure it.
+
+interface ParsedResume {
+    summary: string;
+    skills: string[];
+    experience: Array<{
+        company: string;
+        role: string;
+        date: string;
+        bullets: string[];
+    }>;
+    projects: Array<{
+        name: string;
+        description: string;
+    }>;
+    education: Array<{
+        school: string;
+        degree: string;
+        year: string;
+    }>;
+}
 
 const CLEANUP_PROMPT = `
 You are an expert Resume Parser. 
@@ -63,27 +82,28 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Failed to parse PDF text" }, { status: 500 });
         }
 
-        // 2. AI Structure
-        const result = await model.generateContent([
+        // 2. AI Structure using fallback mechanism
+        const structuredData = await generateWithFallback<ParsedResume>(
+            `RESUME TEXT:\n${textContent}`,
             CLEANUP_PROMPT,
-            `RESUME TEXT:\n${textContent}`
-        ]);
+            true // JSON mode
+        );
 
-        const responseText = result.response.text();
-        let structuredData;
-        try {
-            // Attempt to find JSON block if wrapped in markdown
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            const cleanJson = jsonMatch ? jsonMatch[0] : responseText;
-            structuredData = JSON.parse(cleanJson);
-        } catch (_e) {
-            return NextResponse.json({ error: "AI failed to structure data", raw: responseText }, { status: 500 });
+        if (!structuredData) {
+            return NextResponse.json({ 
+                error: "AI failed to structure data after trying all models",
+                modelUsed: getCurrentModel()
+            }, { status: 500 });
         }
 
-        return NextResponse.json({ data: structuredData });
+        return NextResponse.json({ 
+            data: structuredData,
+            modelUsed: getCurrentModel()
+        });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Parse failed";
         console.error("Parse API Error", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: message, modelUsed: getCurrentModel() }, { status: 500 });
     }
 }

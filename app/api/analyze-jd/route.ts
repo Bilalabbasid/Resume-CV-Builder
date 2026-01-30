@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { model, PROMPTS, parseAIResponse } from "@/lib/gemini";
+import { generateWithFallback, PROMPTS, getCurrentModel } from "@/lib/gemini";
 import { JDAnalysis } from "@/types/resume";
 
 export async function POST(req: NextRequest) {
@@ -12,26 +12,28 @@ export async function POST(req: NextRequest) {
             }, { status: 400 });
         }
 
-        const result = await model.generateContent([
+        // Use generateWithFallback for automatic model switching
+        const analysis = await generateWithFallback<JDAnalysis>(
+            `Analyze this job description:\n\n${jobDescription}`,
             PROMPTS.JD_ANALYSIS,
-            `Analyze this job description:\n\n${jobDescription}`
-        ]);
-
-        const responseText = result.response.text();
-        const analysis = parseAIResponse<JDAnalysis>(responseText);
+            true // JSON mode
+        );
 
         if (!analysis) {
-            console.error("Failed to parse JD analysis JSON", responseText);
             return NextResponse.json({ 
-                error: "Failed to analyze job description" 
+                error: "Failed to analyze job description after trying all models",
+                modelUsed: getCurrentModel()
             }, { status: 500 });
         }
 
-        return NextResponse.json({ data: analysis });
+        return NextResponse.json({ 
+            data: analysis,
+            modelUsed: getCurrentModel()
+        });
 
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "JD analysis failed";
         console.error("JD Analysis Error:", error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json({ error: message, modelUsed: getCurrentModel() }, { status: 500 });
     }
 }
