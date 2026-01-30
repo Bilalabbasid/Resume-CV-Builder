@@ -4,24 +4,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/useUser";
-import { ArrowRight, Wand2, Upload, FileText, Layout, Loader2, PenTool, User, Mail, Phone, MapPin, Linkedin, Github, Globe, Sparkles, Target } from "lucide-react";
+import { ArrowRight, Wand2, Upload, FileText, Layout, Loader2, PenTool, User, Mail, Phone, MapPin, Linkedin, Github, Globe, Sparkles, Target, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ContactInfo, JDAnalysis } from "@/types/resume";
+import { TEMPLATES } from "@/lib/templates";
 
 export default function CreateResume() {
     const { userId } = useUser();
     const router = useRouter();
 
     const [activeTab, setActiveTab] = useState<"ai" | "manual" | "upload" | "examples">("ai");
-    const [step, setStep] = useState<"contact" | "content">("contact");
+    const [step, setStep] = useState<"contact" | "template" | "content">("contact");
     const [prompt, setPrompt] = useState("");
     const [jobDescription, setJobDescription] = useState("");
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [jdAnalysis, setJdAnalysis] = useState<JDAnalysis | null>(null);
     const [analyzingJD, setAnalyzingJD] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState("modern-2024");
     
     // Contact info state
     const [contactInfo, setContactInfo] = useState<ContactInfo>({
@@ -176,7 +178,7 @@ export default function CreateResume() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     title,
-                    templateId: "single-column",
+                    templateId: selectedTemplate,
                     userId,
                     contactInfo,
                     jobDescription: jobDescription || undefined,
@@ -300,24 +302,33 @@ export default function CreateResume() {
                             </h2>
                             
                             {/* Step indicator */}
-                            <div className="flex justify-center gap-4 mb-4">
+                            <div className="flex justify-center gap-2 mb-4">
                                 <button 
                                     onClick={() => setStep("contact")}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${step === "contact" ? 'bg-purple-500 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
+                                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${step === "contact" ? 'bg-purple-500 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
                                 >
-                                    1. Contact Info
+                                    {(step === "template" || step === "content") && contactInfo.fullName ? <CheckCircle2 className="w-3 h-3" /> : "1."}
+                                    Contact
                                 </button>
                                 <button 
-                                    onClick={() => setStep("content")}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${step === "content" ? 'bg-purple-500 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
+                                    onClick={() => contactInfo.fullName && contactInfo.email ? setStep("template") : toast.error("Fill contact info first")}
+                                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${step === "template" ? 'bg-purple-500 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
                                 >
-                                    2. Profile & JD
+                                    {step === "content" && selectedTemplate ? <CheckCircle2 className="w-3 h-3" /> : "2."}
+                                    Template
+                                </button>
+                                <button 
+                                    onClick={() => selectedTemplate ? setStep("content") : toast.error("Select a template first")}
+                                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${step === "content" ? 'bg-purple-500 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
+                                >
+                                    3. Profile & JD
                                 </button>
                             </div>
 
                             {step === "contact" && (
                                 <div className="space-y-4 animate-in fade-in">
                                     <p className="text-neutral-400 text-sm">Enter your basic information (appears in resume header)</p>
+                                    <p className="text-xs text-amber-400">* Name and Email are required to continue</p>
                                     
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="col-span-2">
@@ -392,16 +403,80 @@ export default function CreateResume() {
                                         variant="premium" 
                                         size="lg" 
                                         className="w-full" 
-                                        onClick={() => setStep("content")}
-                                        disabled={!contactInfo.fullName || !contactInfo.email}
+                                        onClick={() => {
+                                            if (!contactInfo.fullName || !contactInfo.email) {
+                                                toast.error("Please fill in your Name and Email to continue");
+                                                return;
+                                            }
+                                            setStep("template");
+                                        }}
                                     >
-                                        Next: Add Profile & Job Description <ArrowRight className="ml-2 w-4 h-4" />
+                                        Next: Choose Template <ArrowRight className="ml-2 w-4 h-4" />
                                     </Button>
+                                </div>
+                            )}
+
+                            {step === "template" && (
+                                <div className="space-y-4 animate-in fade-in">
+                                    <div className="flex items-center justify-between">
+                                        <button onClick={() => setStep("contact")} className="text-neutral-400 hover:text-white flex items-center gap-1 text-sm">
+                                            <ArrowLeft className="w-4 h-4" /> Back
+                                        </button>
+                                        <p className="text-neutral-400 text-sm">Choose your resume template</p>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-3 gap-3 max-h-[300px] overflow-y-auto p-1">
+                                        {TEMPLATES.slice(0, 12).map(template => (
+                                            <button
+                                                key={template.id}
+                                                onClick={() => setSelectedTemplate(template.id)}
+                                                className={`p-3 rounded-lg border-2 text-left transition-all hover:scale-[1.02] ${
+                                                    selectedTemplate === template.id 
+                                                        ? 'border-purple-500 bg-purple-500/10' 
+                                                        : 'border-neutral-700 hover:border-neutral-600 bg-neutral-800'
+                                                }`}
+                                            >
+                                                <div className={`h-2 w-full ${template.color} rounded mb-2`} />
+                                                <p className="text-sm font-medium truncate">{template.name}</p>
+                                                <p className="text-xs text-neutral-500">{template.category}</p>
+                                                {selectedTemplate === template.id && (
+                                                    <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                        <Link href="/templates" className="flex-1">
+                                            <Button variant="outline" size="lg" className="w-full">
+                                                Browse All Templates
+                                            </Button>
+                                        </Link>
+                                        <Button 
+                                            variant="premium" 
+                                            size="lg" 
+                                            className="flex-1"
+                                            onClick={() => setStep("content")}
+                                        >
+                                            Next: Add Profile <ArrowRight className="ml-2 w-4 h-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
 
                             {step === "content" && (
                                 <div className="space-y-4 animate-in fade-in">
+                                    <div className="flex items-center justify-between">
+                                        <button onClick={() => setStep("template")} className="text-neutral-400 hover:text-white flex items-center gap-1 text-sm">
+                                            <ArrowLeft className="w-4 h-4" /> Back
+                                        </button>
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <span className="text-neutral-500">Template:</span>
+                                            <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs">
+                                                {TEMPLATES.find(t => t.id === selectedTemplate)?.name || "Modern"}
+                                            </span>
+                                        </div>
+                                    </div>
                                     <p className="text-neutral-400 text-sm">Describe your experience. Add a Job Description for ATS-optimized tailoring.</p>
 
                                     <div className="grid gap-4">
