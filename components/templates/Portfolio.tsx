@@ -38,7 +38,16 @@ export function PortfolioTemplate({ resume }: { resume: Resume }) {
                                 <div className="text-xs font-bold text-fuchsia-400 mb-4">{exp.date}</div>
                                 <h3 className="text-xl font-bold mb-1">{exp.role}</h3>
                                 <div className="text-sm text-neutral-400 mb-4">{exp.company}</div>
-                                <p className="text-sm text-neutral-500 leading-relaxed max-w-sm">{exp.bullets?.[0]}</p>
+                                {exp.bullets && exp.bullets.length > 0 && (
+                                    <ul className="mt-2 space-y-1">
+                                        {exp.bullets.slice(0, 4).map((bullet: string, j: number) => (
+                                            <li key={j} className="text-sm text-neutral-500 leading-relaxed flex items-start gap-2">
+                                                <span className="mt-1 flex-shrink-0">•</span>
+                                                <span>{bullet}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         ))}
                     </div>

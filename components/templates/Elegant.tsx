@@ -25,9 +25,9 @@ export function ElegantTemplate({ resume }: { resume: Resume }) {
                     {contact?.location && <span>{contact.location}</span>}
                 </div>
                 <div className="mt-2 flex justify-center gap-4 text-sm text-gray-500">
-                    {contact?.linkedin && <span>LinkedIn</span>}
-                    {contact?.github && <span>GitHub</span>}
-                    {contact?.portfolio && <span>Portfolio</span>}
+                    {contact?.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="hover:underline">LinkedIn</a>}
+                    {contact?.github && <a href={contact.github} target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a>}
+                    {contact?.portfolio && <a href={contact.portfolio} target="_blank" rel="noopener noreferrer" className="hover:underline">Portfolio</a>}
                 </div>
             </header>
 
@@ -58,7 +58,7 @@ export function ElegantTemplate({ resume }: { resume: Resume }) {
                                         <span className="text-gray-500 text-sm">{exp.date}</span>
                                     </div>
                                     <ul className="mt-3 space-y-2">
-                                        {exp.bullets?.map((bullet, j) => (
+                                        {exp.bullets?.slice(0, 4).map((bullet, j) => (
                                             <li key={j} className="text-gray-600 text-sm leading-relaxed">
                                                 — {bullet}
                                             </li>
@@ -78,13 +78,11 @@ export function ElegantTemplate({ resume }: { resume: Resume }) {
                             <h2 className="text-sm font-bold tracking-[0.4em] text-gray-800 uppercase mb-4 text-center">
                                 Expertise
                             </h2>
-                            <div className="text-center">
+                            <ul className="list-disc list-outside ml-5 flex flex-wrap gap-x-6 gap-y-1 text-gray-700">
                                 {skills.map((skill, i) => (
-                                    <span key={i} className="inline-block text-gray-600 text-sm">
-                                        {skill}{i < skills.length - 1 ? " • " : ""}
-                                    </span>
+                                    <li key={i} className="text-xs" style={{ flexBasis: 'calc(20% - 1.5rem)', minWidth: 'fit-content' }}>{skill}</li>
                                 ))}
-                            </div>
+                            </ul>
                         </section>
                     )}
 
@@ -114,9 +112,20 @@ export function ElegantTemplate({ resume }: { resume: Resume }) {
                         </h2>
                         <div className="grid grid-cols-2 gap-6">
                             {projects.map((proj, i) => (
-                                <div key={i} className="text-center">
+                                <div key={i}>
                                     <h3 className="font-semibold text-gray-800">{proj.name}</h3>
-                                    <p className="text-gray-600 text-sm mt-1">{proj.description}</p>
+                                    {proj.description && (
+                                        <p className="text-gray-600 text-xs italic mt-1">{proj.description}</p>
+                                    )}
+                                    {proj.bullets && proj.bullets.length > 0 && (
+                                        <ul className="mt-2 space-y-1">
+                                            {proj.bullets.slice(0, 3).map((bullet, j) => (
+                                                <li key={j} className="text-gray-600 text-sm">
+                                                    — {bullet}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             ))}
                         </div>

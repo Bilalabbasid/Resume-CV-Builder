@@ -25,9 +25,9 @@ export function BoldTemplate({ resume }: { resume: Resume }) {
                     {contact?.location && <span>{contact.location}</span>}
                 </div>
                 <div className="mt-2 flex gap-4 text-white/70 text-sm">
-                    {contact?.linkedin && <span>LinkedIn</span>}
-                    {contact?.github && <span>GitHub</span>}
-                    {contact?.portfolio && <span>Portfolio</span>}
+                    {contact?.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="hover:underline">LinkedIn</a>}
+                    {contact?.github && <a href={contact.github} target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a>}
+                    {contact?.portfolio && <a href={contact.portfolio} target="_blank" rel="noopener noreferrer" className="hover:underline">Portfolio</a>}
                 </div>
             </header>
 
@@ -45,13 +45,11 @@ export function BoldTemplate({ resume }: { resume: Resume }) {
                 {skills && skills.length > 0 && (
                     <section className="mb-8">
                         <h2 className="text-2xl font-black text-orange-500 mb-4 uppercase">Skills</h2>
-                        <div className="flex flex-wrap gap-2">
+                        <ul className="list-disc list-outside ml-5 flex flex-wrap gap-x-6 gap-y-1 text-gray-300">
                             {skills.map((skill, i) => (
-                                <span key={i} className="bg-gray-800 text-white px-4 py-2 rounded font-bold text-sm border border-gray-700">
-                                    {skill}
-                                </span>
+                                <li key={i} className="text-xs" style={{ flexBasis: 'calc(20% - 1.5rem)', minWidth: 'fit-content' }}>{skill}</li>
                             ))}
-                        </div>
+                        </ul>
                     </section>
                 )}
 
@@ -70,7 +68,7 @@ export function BoldTemplate({ resume }: { resume: Resume }) {
                                         <span className="text-gray-400 text-sm bg-gray-900 px-3 py-1 rounded">{exp.date}</span>
                                     </div>
                                     <ul className="mt-3 space-y-2">
-                                        {exp.bullets?.map((bullet, j) => (
+                                        {exp.bullets?.slice(0, 4).map((bullet, j) => (
                                             <li key={j} className="text-gray-300 text-sm flex items-start gap-2">
                                                 <span className="text-orange-500 font-bold">→</span>
                                                 {bullet}
@@ -91,9 +89,21 @@ export function BoldTemplate({ resume }: { resume: Resume }) {
                             <h2 className="text-2xl font-black text-orange-500 mb-4 uppercase">Projects</h2>
                             <div className="space-y-3">
                                 {projects.map((proj, i) => (
-                                    <div key={i} className="bg-gray-800 p-4 rounded">
+                                    <div key={i}>
                                         <h3 className="font-bold text-white">{proj.name}</h3>
-                                        <p className="text-gray-400 text-sm mt-1">{proj.description}</p>
+                                        {proj.description && (
+                                            <p className="text-gray-400 text-xs italic mt-1">{proj.description}</p>
+                                        )}
+                                        {proj.bullets && proj.bullets.length > 0 && (
+                                            <ul className="mt-2 space-y-1">
+                                                {proj.bullets.slice(0, 3).map((bullet, j) => (
+                                                    <li key={j} className="text-gray-300 text-sm flex items-start gap-2">
+                                                        <span className="text-orange-500">•</span>
+                                                        <span>{bullet}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
                                     </div>
                                 ))}
                             </div>

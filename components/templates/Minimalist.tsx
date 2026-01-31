@@ -31,7 +31,16 @@ export function MinimalistTemplate({ resume }: { resume: Resume }) {
                                 <div className="col-span-3">
                                     <div className="font-bold text-sm mb-1">{exp.role}</div>
                                     <div className="text-xs italic mb-2 text-gray-600">{exp.company}</div>
-                                    <p className="text-xs leading-relaxed text-gray-700">{exp.bullets?.[0]}</p>
+                                    {exp.bullets && exp.bullets.length > 0 && (
+                                        <ul className="mt-2 space-y-1">
+                                            {exp.bullets.slice(0, 4).map((bullet: string, j: number) => (
+                                                <li key={j} className="text-xs leading-relaxed text-gray-700 flex items-start gap-2">
+                                                    <span className="mt-1 flex-shrink-0">•</span>
+                                                    <span>{bullet}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -11,13 +11,13 @@ export function ModernProTemplate({ resume }: { resume: Resume }) {
     const education = resume.sections.find(s => s.type === "education")?.content as EducationEntry[] | undefined;
 
     return (
-        <div className="bg-white text-gray-800 h-full min-h-[11in] font-sans" id="resume-preview">
+        <div className="bg-white text-gray-800 h-full min-h-[11in] font-sans overflow-hidden" id="resume-preview">
             {/* Header with accent bar */}
             <div className="bg-gradient-to-r from-teal-600 to-teal-500 text-white px-8 py-6">
-                <h1 className="text-4xl font-bold tracking-wide">
+                <h1 className="text-4xl font-bold tracking-wide break-words">
                     {contact?.fullName || "Your Name"}
                 </h1>
-                <div className="flex flex-wrap gap-4 mt-3 text-teal-100 text-sm">
+                <div className="flex flex-wrap gap-4 mt-3 text-teal-100 text-sm break-all">
                     {contact?.email && (
                         <span className="flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,8 +43,8 @@ export function ModernProTemplate({ resume }: { resume: Resume }) {
                             {contact.location}
                         </span>
                     )}
-                    {contact?.linkedin && <span>LinkedIn</span>}
-                    {contact?.github && <span>GitHub</span>}
+                    {contact?.linkedin && <a href={contact.linkedin} className="hover:underline" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
+                    {contact?.github && <a href={contact.github} className="hover:underline" target="_blank" rel="noopener noreferrer">GitHub</a>}
                 </div>
             </div>
 
@@ -52,7 +52,7 @@ export function ModernProTemplate({ resume }: { resume: Resume }) {
                 {/* Summary */}
                 {summary && (
                     <section className="mb-6">
-                        <p className="text-gray-600 leading-relaxed border-l-4 border-teal-500 pl-4 italic">
+                        <p className="text-gray-600 leading-relaxed italic">
                             {summary}
                         </p>
                     </section>
@@ -61,43 +61,38 @@ export function ModernProTemplate({ resume }: { resume: Resume }) {
                 {/* Skills */}
                 {skills && skills.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-lg font-bold text-teal-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-teal-500"></span>
+                        <h2 className="text-base font-bold text-gray-900 uppercase mb-3">
                             Skills
                         </h2>
-                        <div className="flex flex-wrap gap-2">
+                        <ul className="list-disc list-outside ml-5 flex flex-wrap gap-x-6 gap-y-1 text-gray-700">
                             {skills.map((skill, i) => (
-                                <span key={i} className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-sm font-medium border border-teal-200">
-                                    {skill}
-                                </span>
+                                <li key={i} className="text-xs" style={{ flexBasis: 'calc(20% - 1.5rem)', minWidth: 'fit-content' }}>{skill}</li>
                             ))}
-                        </div>
+                        </ul>
                     </section>
                 )}
 
                 {/* Experience */}
                 {experience && experience.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-lg font-bold text-teal-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-teal-500"></span>
+                        <h2 className="text-base font-bold text-gray-900 uppercase mb-3">
                             Experience
                         </h2>
                         <div className="space-y-5">
                             {experience.map((exp, i) => (
-                                <div key={i} className="relative pl-4 border-l-2 border-gray-200">
-                                    <div className="absolute -left-[5px] top-1 w-2 h-2 bg-teal-500 rounded-full"></div>
+                                <div key={i}>
                                     <div className="flex justify-between items-start mb-1">
                                         <div>
                                             <h3 className="font-bold text-gray-800">{exp.role}</h3>
-                                            <p className="text-teal-600 font-medium text-sm">{exp.company}</p>
+                                            <p className="text-gray-600 text-sm">{exp.company}</p>
                                         </div>
-                                        <span className="text-gray-500 text-sm bg-gray-100 px-2 py-0.5 rounded">{exp.date}</span>
+                                        <span className="text-gray-600 text-sm">{exp.date}</span>
                                     </div>
                                     <ul className="mt-2 space-y-1">
-                                        {exp.bullets?.map((bullet, j) => (
-                                            <li key={j} className="text-gray-600 text-sm flex items-start gap-2">
-                                                <span className="text-teal-500 mt-1">•</span>
-                                                {bullet}
+                                        {exp.bullets?.slice(0, 4).map((bullet, j) => (
+                                            <li key={j} className="text-gray-600 text-sm leading-relaxed flex items-start gap-2">
+                                                <span className="text-gray-600 mt-1 flex-shrink-0">•</span>
+                                                <span>{bullet}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -110,15 +105,26 @@ export function ModernProTemplate({ resume }: { resume: Resume }) {
                 {/* Projects */}
                 {projects && projects.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-lg font-bold text-teal-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-teal-500"></span>
+                        <h2 className="text-base font-bold text-gray-900 uppercase mb-3">
                             Projects
                         </h2>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
                             {projects.map((proj, i) => (
-                                <div key={i} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <div key={i}>
                                     <h3 className="font-bold text-gray-800">{proj.name}</h3>
-                                    <p className="text-gray-600 text-sm mt-1">{proj.description}</p>
+                                    {proj.description && (
+                                        <p className="text-gray-600 text-xs italic mt-1">{proj.description}</p>
+                                    )}
+                                    {proj.bullets && proj.bullets.length > 0 && (
+                                        <ul className="mt-1 space-y-1">
+                                            {proj.bullets.slice(0, 3).map((bullet, j) => (
+                                                <li key={j} className="text-gray-600 text-sm flex items-start gap-2">
+                                                    <span className="text-gray-600 mt-1 flex-shrink-0">•</span>
+                                                    <span>{bullet}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -128,8 +134,7 @@ export function ModernProTemplate({ resume }: { resume: Resume }) {
                 {/* Education */}
                 {education && education.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-lg font-bold text-teal-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-teal-500"></span>
+                        <h2 className="text-base font-bold text-gray-900 uppercase mb-3">
                             Education
                         </h2>
                         <div className="space-y-3">

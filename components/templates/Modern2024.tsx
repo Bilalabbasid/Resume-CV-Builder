@@ -11,16 +11,16 @@ export function Modern2024Template({ resume }: { resume: Resume }) {
     const education = resume.sections.find(s => s.type === "education")?.content as EducationEntry[] | undefined;
 
     return (
-        <div className="bg-zinc-50 text-gray-800 h-full min-h-[11in] font-sans" id="resume-preview">
+        <div className="bg-zinc-50 text-gray-800 h-full min-h-[11in] font-sans overflow-hidden" id="resume-preview">
             {/* Modern Header */}
             <header className="bg-zinc-900 text-white px-10 py-8">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-4xl font-black tracking-tight">
+                <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-4xl font-black tracking-tight break-words">
                             {contact?.fullName || "Your Name"}
                         </h1>
                         {summary && (
-                            <p className="mt-3 text-zinc-400 max-w-lg text-sm leading-relaxed">{summary}</p>
+                            <p className="mt-3 text-zinc-400 max-w-lg text-sm leading-relaxed break-words">{summary}</p>
                         )}
                     </div>
                     <div className="text-right text-sm space-y-1">
@@ -35,10 +35,10 @@ export function Modern2024Template({ resume }: { resume: Resume }) {
                         )}
                         <div className="flex gap-2 justify-end mt-2">
                             {contact?.linkedin && (
-                                <span className="bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-300">in</span>
+                                <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-300 hover:bg-zinc-700">in</a>
                             )}
                             {contact?.github && (
-                                <span className="bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-300">gh</span>
+                                <a href={contact.github} target="_blank" rel="noopener noreferrer" className="bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-300 hover:bg-zinc-700">gh</a>
                             )}
                         </div>
                     </div>
@@ -49,20 +49,19 @@ export function Modern2024Template({ resume }: { resume: Resume }) {
                 {/* Skills Pills */}
                 {skills && skills.length > 0 && (
                     <section className="mb-8">
-                        <div className="flex flex-wrap gap-2">
+                        <h2 className="text-base font-bold text-gray-900 uppercase mb-4">Skills</h2>
+                        <ul className="list-disc list-outside ml-5 flex flex-wrap gap-x-6 gap-y-1">
                             {skills.map((skill, i) => (
-                                <span key={i} className="bg-zinc-900 text-white px-4 py-1.5 rounded-full text-sm font-medium">
-                                    {skill}
-                                </span>
+                                <li key={i} className="text-xs text-gray-700" style={{ flexBasis: 'calc(20% - 1.5rem)', minWidth: 'fit-content' }}>{skill}</li>
                             ))}
-                        </div>
+                        </ul>
                     </section>
                 )}
 
                 {/* Experience */}
                 {experience && experience.length > 0 && (
                     <section className="mb-8">
-                        <h2 className="text-2xl font-black text-zinc-900 mb-6">Experience</h2>
+                        <h2 className="text-base font-bold text-gray-900 uppercase mb-6">Experience</h2>
                         <div className="space-y-6">
                             {experience.map((exp, i) => (
                                 <div key={i} className="group">
@@ -73,7 +72,7 @@ export function Modern2024Template({ resume }: { resume: Resume }) {
                                     </div>
                                     <div className="pl-4 border-l-2 border-zinc-200 group-hover:border-zinc-900 transition-colors">
                                         <ul className="space-y-2">
-                                            {exp.bullets?.map((bullet, j) => (
+                                            {exp.bullets?.slice(0, 4).map((bullet, j) => (
                                                 <li key={j} className="text-zinc-600 text-sm leading-relaxed">
                                                     {bullet}
                                                 </li>
@@ -94,13 +93,18 @@ export function Modern2024Template({ resume }: { resume: Resume }) {
                             <h2 className="text-2xl font-black text-zinc-900 mb-4">Projects</h2>
                             <div className="space-y-4">
                                 {projects.map((proj, i) => (
-                                    <div key={i} className="p-4 bg-white rounded-lg shadow-sm border border-zinc-100">
+                                    <div key={i}>
                                         <h3 className="font-bold text-zinc-900">{proj.name}</h3>
-                                        <p className="text-zinc-600 text-sm mt-1">{proj.description}</p>
+                                        {proj.description && (
+                                            <p className="text-zinc-600 text-xs italic mt-1">{proj.description}</p>
+                                        )}
                                         {proj.bullets && proj.bullets.length > 0 && (
                                             <ul className="mt-2 space-y-1">
-                                                {proj.bullets.map((b, j) => (
-                                                    <li key={j} className="text-zinc-500 text-xs">• {b}</li>
+                                                {proj.bullets.slice(0, 3).map((b, j) => (
+                                                    <li key={j} className="text-zinc-600 text-sm flex items-start gap-2">
+                                                        <span className="mt-1 flex-shrink-0">•</span>
+                                                        <span>{b}</span>
+                                                    </li>
                                                 ))}
                                             </ul>
                                         )}
@@ -113,7 +117,7 @@ export function Modern2024Template({ resume }: { resume: Resume }) {
                     {/* Education */}
                     {education && education.length > 0 && (
                         <section>
-                            <h2 className="text-2xl font-black text-zinc-900 mb-4">Education</h2>
+                            <h2 className="text-base font-bold text-gray-900 uppercase mb-4">Education</h2>
                             <div className="space-y-4">
                                 {education.map((edu, i) => (
                                     <div key={i} className="p-4 bg-white rounded-lg shadow-sm border border-zinc-100">

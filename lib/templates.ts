@@ -46,6 +46,15 @@ export const TEMPLATES: TemplateMeta[] = [
 
     // ATS-Friendly Templates
     {
+        id: "ats-classic",
+        name: "ATS Classic",
+        description: "Ultra-clean, professional format optimized for ATS systems. Perfect for corporate roles.",
+        thumbnail: "preview-ats",
+        category: "ATS-Friendly",
+        popular: true,
+        color: "bg-slate-700"
+    },
+    {
         id: "single-column",
         name: "Classic",
         description: "Clean, ATS-friendly single column layout. Best for corporate roles.",

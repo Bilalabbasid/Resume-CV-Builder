@@ -29,13 +29,11 @@ export function StartupTemplate({ resume }: { resume: Resume }) {
 
                 {skills && (
                     <div className="mb-12">
-                        <div className="flex flex-wrap gap-3">
+                        <ul className="list-disc list-outside ml-5 flex flex-wrap gap-x-6 gap-y-1 text-slate-700">
                             {skills.map((s, i) => (
-                                <span key={i} className="px-4 py-2 rounded-full bg-slate-100 text-slate-700 font-bold text-sm border-2 border-slate-100 hover:border-orange-200 transition-colors">
-                                    {s}
-                                </span>
+                                <li key={i} className="text-xs" style={{ flexBasis: 'calc(20% - 1.5rem)', minWidth: 'fit-content' }}>{s}</li>
                             ))}
-                        </div>
+                        </ul>
                     </div>
                 )}
 
@@ -56,7 +54,16 @@ export function StartupTemplate({ resume }: { resume: Resume }) {
                                         </div>
                                         <span className="px-3 py-1 rounded bg-slate-100 text-xs font-bold text-slate-500">{exp.date}</span>
                                     </div>
-                                    <p className="text-slate-600 leading-relaxed mt-3">{exp.bullets?.[0]}</p>
+                                    {exp.bullets && exp.bullets.length > 0 && (
+                                        <ul className="mt-3 space-y-1">
+                                            {exp.bullets.slice(0, 4).map((bullet: string, j: number) => (
+                                                <li key={j} className="text-slate-600 text-sm leading-relaxed flex items-start gap-2">
+                                                    <span className="text-orange-500 mt-1 flex-shrink-0">•</span>
+                                                    <span>{bullet}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             ))}
                         </div>

@@ -26,7 +26,7 @@ import { SidebarTemplate } from "@/components/templates/Sidebar";
 import { PhotoModernTemplate } from "@/components/templates/PhotoModern";
 import { PhotoCreativeTemplate } from "@/components/templates/PhotoCreative";
 import { PhotoProfessionalTemplate } from "@/components/templates/PhotoProfessional";
-import { CanvaMinimalistTemplate } from "@/components/templates/CanvaMinimalist";
+import { ATSClassicTemplate } from "@/components/templates/ATSClassic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Save, Download, ArrowLeft, Plus, Trash, Undo2, Redo2, Eye, EyeOff, Palette, Keyboard, Sparkles, Target, FileText, User, Mail, Phone, MapPin, Linkedin, Github, Globe, Zap, TrendingUp, AlertCircle, CheckCircle2, Camera, X } from "lucide-react";
@@ -189,6 +189,17 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
     const updateSectionContent = (id: string, content: SectionContent) => {
         if (!resume) return;
         const newSections = resume.sections.map(s => s.id === id ? { ...s, content } : s);
+        
+        // If updating contact info, also update the resume title if it's "Untitled Resume"
+        const section = resume.sections.find(s => s.id === id);
+        if (section?.type === "contact") {
+            const contactInfo = content as ContactInfo;
+            if (contactInfo.fullName && (resume.title === "Untitled Resume" || resume.title === "")) {
+                updateResume({ ...resume, sections: newSections, title: `${contactInfo.fullName}'s Resume` });
+                return;
+            }
+        }
+        
         updateResume({ ...resume, sections: newSections });
     };
 
@@ -481,6 +492,7 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
 
     const templates = [
         // ATS-Friendly
+        { id: "ats-classic", name: "ATS Classic", color: "bg-slate-700", category: "ATS" },
         { id: "single-column", name: "Classic", color: "bg-blue-500", category: "ATS" },
         { id: "professional", name: "Professional", color: "bg-gray-700", category: "ATS" },
         { id: "clean", name: "Clean", color: "bg-slate-500", category: "ATS" },
@@ -507,8 +519,6 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
         { id: "acad-1", name: "Academic", color: "bg-green-600", category: "Professional" },
         { id: "start-1", name: "Startup", color: "bg-orange-500", category: "Creative" },
         { id: "fin-1", name: "Finance", color: "bg-emerald-700", category: "Professional" },
-        // Canva-style
-        { id: "canva-minimalist", name: "Minimalist CV", color: "bg-gray-900", category: "ATS" },
     ];
 
     return (
@@ -909,7 +919,18 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
                 {/* Sections List & Form */}
                 <div className="flex flex-1 overflow-hidden">
                     {/* Tabs / Navigation */}
-                    <div className="w-48 bg-neutral-900 border-r border-neutral-800 p-4 space-y-2 overflow-y-auto">
+                    <div className="w-64 bg-neutral-900 border-r border-neutral-800 p-4 space-y-2 overflow-y-auto">
+                        {/* Resume Title Editor */}
+                        <div className="mb-4 pb-4 border-b border-neutral-800">
+                            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block mb-2">Resume Title</label>
+                            <Input 
+                                value={resume.title}
+                                onChange={(e) => updateResume({ ...resume, title: e.target.value })}
+                                placeholder="My Resume"
+                                className="bg-neutral-800 border-neutral-700 text-sm"
+                            />
+                        </div>
+                        
                         <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Sections</h3>
                         <p className="text-xs text-neutral-600 mb-4">Drag to reorder</p>
                         {resume.sections.map(section => (
@@ -942,66 +963,111 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
                                 </button>
                             </div>
                         ))}
-                        <div className="mt-4 space-y-1">
-                            <p className="text-xs text-neutral-600 uppercase tracking-wider mb-2">Add Section</p>
-                            {!resume.sections.find(s => s.type === "contact") && (
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="w-full justify-start text-neutral-500 hover:text-blue-400" 
-                                    onClick={() => handleAddSection("contact")}
+                        
+                        {/* Add Section Panel */}
+                        <div className="mt-6 pt-4 border-t border-neutral-800">
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Add Section</p>
+                                <Plus className="w-4 h-4 text-purple-400" />
+                            </div>
+                            
+                            {/* Manual Sections */}
+                            <div className="space-y-2 mb-4">
+                                <p className="text-[10px] text-neutral-600 uppercase tracking-wider mb-1.5">✏️ Add Manually</p>
+                                {!resume.sections.find(s => s.type === "contact") && (
+                                    <button
+                                        className="w-full group relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/30 hover:border-blue-400/50 px-3 py-2.5 text-left transition-all"
+                                        onClick={() => handleAddSection("contact")}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <User className="w-4 h-4 text-blue-400" />
+                                            <span className="text-sm font-medium text-neutral-200">Contact Info</span>
+                                        </div>
+                                        <p className="text-[10px] text-neutral-500 mt-0.5 ml-6">Name, email, phone, links</p>
+                                    </button>
+                                )}
+                                <button
+                                    className="w-full group relative overflow-hidden rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/30 hover:border-purple-400/50 px-3 py-2.5 text-left transition-all"
+                                    onClick={() => handleAddSection("experience")}
                                 >
-                                    <Plus className="w-3 h-3 mr-2" /> Contact Info
-                                </Button>
-                            )}
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-neutral-500 hover:text-purple-400" 
-                                onClick={() => handleAddSection("summary")}
-                            >
-                                <Plus className="w-3 h-3 mr-2" /> Summary
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-neutral-500 hover:text-purple-400" 
-                                onClick={() => handleAddSection("skills")}
-                            >
-                                <Plus className="w-3 h-3 mr-2" /> Skills
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-neutral-500 hover:text-purple-400" 
-                                onClick={() => handleAddSection("experience")}
-                            >
-                                <Plus className="w-3 h-3 mr-2" /> Experience
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-neutral-500 hover:text-purple-400" 
-                                onClick={() => handleAddSection("projects")}
-                            >
-                                <Plus className="w-3 h-3 mr-2" /> Projects
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-neutral-500 hover:text-purple-400" 
-                                onClick={() => handleAddSection("education")}
-                            >
-                                <Plus className="w-3 h-3 mr-2" /> Education
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-neutral-500 hover:text-purple-400" 
-                                onClick={() => handleAddSection("certifications")}
-                            >
-                                <Plus className="w-3 h-3 mr-2" /> Certifications
-                            </Button>
+                                    <div className="flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4 text-purple-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Experience</span>
+                                    </div>
+                                    <p className="text-[10px] text-neutral-500 mt-0.5 ml-6">Job roles and achievements</p>
+                                </button>
+                                <button
+                                    className="w-full group relative overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500/10 to-cyan-600/10 hover:from-cyan-500/20 hover:to-cyan-600/20 border border-cyan-500/30 hover:border-cyan-400/50 px-3 py-2.5 text-left transition-all"
+                                    onClick={() => handleAddSection("education")}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Globe className="w-4 h-4 text-cyan-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Education</span>
+                                    </div>
+                                    <p className="text-[10px] text-neutral-500 mt-0.5 ml-6">Degrees and universities</p>
+                                </button>
+                            </div>
+
+                            {/* AI-Powered Sections */}
+                            <div className="space-y-2 mb-4 p-3 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 rounded-lg border border-violet-500/20">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                                    <p className="text-[10px] text-violet-400 font-semibold uppercase tracking-wider">✨ AI-Powered</p>
+                                </div>
+                                <button
+                                    className="w-full group relative overflow-hidden rounded-lg bg-gradient-to-r from-violet-500/10 to-violet-600/10 hover:from-violet-500/20 hover:to-violet-600/20 border border-violet-500/30 hover:border-violet-400/50 px-3 py-2.5 text-left transition-all"
+                                    onClick={() => handleAddSection("summary")}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-violet-400" />
+                                            <span className="text-sm font-medium text-neutral-200">Summary</span>
+                                        </div>
+                                        <Sparkles className="w-3 h-3 text-violet-400 opacity-50" />
+                                    </div>
+                                    <p className="text-[10px] text-neutral-500 mt-0.5 ml-6">Write or generate with AI</p>
+                                </button>
+                                <button
+                                    className="w-full group relative overflow-hidden rounded-lg bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 border border-amber-500/30 hover:border-amber-400/50 px-3 py-2.5 text-left transition-all"
+                                    onClick={() => handleAddSection("skills")}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Zap className="w-4 h-4 text-amber-400" />
+                                            <span className="text-sm font-medium text-neutral-200">Skills</span>
+                                        </div>
+                                        <Sparkles className="w-3 h-3 text-amber-400 opacity-50" />
+                                    </div>
+                                    <p className="text-[10px] text-neutral-500 mt-0.5 ml-6">Add or generate from experience</p>
+                                </button>
+                                <button
+                                    className="w-full group relative overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 hover:from-emerald-500/20 hover:to-emerald-600/20 border border-emerald-500/30 hover:border-emerald-400/50 px-3 py-2.5 text-left transition-all"
+                                    onClick={() => handleAddSection("projects")}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-emerald-400" />
+                                            <span className="text-sm font-medium text-neutral-200">Projects</span>
+                                        </div>
+                                        <Sparkles className="w-3 h-3 text-emerald-400 opacity-50" />
+                                    </div>
+                                    <p className="text-[10px] text-neutral-500 mt-0.5 ml-6">Add or generate relevant projects</p>
+                                </button>
+                            </div>
+
+                            {/* Optional Sections */}
+                            <div className="space-y-1">
+                                <p className="text-[10px] text-neutral-600 uppercase tracking-wider mb-1.5">📄 Optional</p>
+                                <button
+                                    className="w-full rounded-lg bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 hover:border-emerald-500/30 px-3 py-2 text-left transition-all"
+                                    onClick={() => handleAddSection("certifications")}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                        <span className="text-sm text-neutral-300">Certifications</span>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1023,6 +1089,7 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
             {showPreview && (
                 <div className="w-1/2 bg-neutral-900 overflow-y-auto p-12 flex justify-center">
                     <div className="w-full max-w-[210mm] transition-all duration-300 origin-top scale-[0.8] sm:scale-100">
+                        {resume.templateId === "ats-classic" && <ATSClassicTemplate resume={resume} />}
                         {resume.templateId === "single-column" && <SingleColumnTemplate resume={resume} />}
                         {resume.templateId === "two-column" && <TwoColumnTemplate resume={resume} />}
                         {resume.templateId === "minimalist" && <MinimalistTemplate resume={resume} />}
@@ -1049,8 +1116,6 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
                         {resume.templateId === "photo-modern" && <PhotoModernTemplate resume={resume} />}
                         {resume.templateId === "photo-creative" && <PhotoCreativeTemplate resume={resume} />}
                         {resume.templateId === "photo-professional" && <PhotoProfessionalTemplate resume={resume} />}
-                        {/* Canva-style Templates */}
-                        {resume.templateId === "canva-minimalist" && <CanvaMinimalistTemplate resume={resume} />}
                     </div>
                 </div>
             )}
@@ -1232,55 +1297,109 @@ function SectionEditor({ section, onUpdate }: { section: ResumeSection, onUpdate
         return (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Edit Summary</h3>
-                    <div className="flex gap-2">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={async () => {
-                                const enhanced = await handleEnhance(summaryContent, "summary", "shorten");
-                                if (enhanced) onUpdate(enhanced);
-                            }}
-                            disabled={enhancing}
-                            title="Make shorter"
-                        >
-                            Shorten
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={async () => {
-                                const enhanced = await handleEnhance(summaryContent, "summary", "ats");
-                                if (enhanced) onUpdate(enhanced);
-                            }}
-                            disabled={enhancing}
-                            title="Optimize for ATS"
-                        >
-                            ATS
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={async () => {
-                                const enhanced = await handleEnhance(summaryContent, "summary");
-                                if (enhanced) onUpdate(enhanced);
-                            }}
-                            disabled={enhancing}
-                        >
-                            {enhancing ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Sparkles className="w-3 h-3 mr-2" />}
-                            Enhance
-                        </Button>
-                    </div>
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-violet-400" />
+                        Edit Summary
+                    </h3>
                 </div>
-                <textarea
-                    className="w-full h-40 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:ring-purple-500 focus:outline-none"
-                    value={summaryContent}
-                    onChange={(e) => onUpdate(e.target.value)}
-                    placeholder="Brief professional summary (e.g., Results-driven software engineer with 5+ years experience building scalable web applications...)"
-                />
-                <p className="text-xs text-neutral-500">
-                    Tip: Keep it to 2-3 sentences. Focus on your unique value and target role.
-                </p>
+
+                {/* AI Generation Prompt */}
+                {!summaryContent && (
+                    <div className="bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 border border-violet-500/30 rounded-lg p-4">
+                        <div className="flex items-start gap-3 mb-3">
+                            <Sparkles className="w-5 h-5 text-violet-400 mt-0.5" />
+                            <div>
+                                <h4 className="text-sm font-semibold text-violet-300 mb-1">How would you like to create your summary?</h4>
+                                <p className="text-xs text-neutral-400">Choose the option that works best for you</p>
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <button
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance("Generate a professional summary", "summary");
+                                    if (enhanced) onUpdate(enhanced);
+                                }}
+                                disabled={enhancing}
+                                className="w-full text-left px-4 py-3 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 rounded-lg transition-all group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-violet-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Generate with AI</span>
+                                    </div>
+                                    {enhancing ? <Loader2 className="w-4 h-4 animate-spin text-violet-400" /> : <span className="text-xs text-violet-400 group-hover:translate-x-1 transition-transform">→</span>}
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1 ml-6">AI will create a professional summary for you</p>
+                            </button>
+                            <button
+                                onClick={() => onUpdate("I am a ")}
+                                className="w-full text-left px-4 py-3 bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 rounded-lg transition-all group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-neutral-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Write Myself</span>
+                                    </div>
+                                    <span className="text-xs text-neutral-400 group-hover:translate-x-1 transition-transform">→</span>
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1 ml-6">Start from scratch with manual input</p>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Summary Editor */}
+                {summaryContent && (
+                    <>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance(summaryContent, "summary", "shorten");
+                                    if (enhanced) onUpdate(enhanced);
+                                }}
+                                disabled={enhancing}
+                                title="Make shorter"
+                            >
+                                Shorten
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance(summaryContent, "summary", "ats");
+                                    if (enhanced) onUpdate(enhanced);
+                                }}
+                                disabled={enhancing}
+                                title="Optimize for ATS"
+                            >
+                                ATS
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance(summaryContent, "summary");
+                                    if (enhanced) onUpdate(enhanced);
+                                }}
+                                disabled={enhancing}
+                            >
+                                {enhancing ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Sparkles className="w-3 h-3 mr-2" />}
+                                Enhance
+                            </Button>
+                        </div>
+                        <textarea
+                            className="w-full h-40 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:ring-purple-500 focus:outline-none"
+                            value={summaryContent}
+                            onChange={(e) => onUpdate(e.target.value)}
+                            placeholder="Brief professional summary (e.g., Results-driven software engineer with 5+ years experience building scalable web applications...)"
+                        />
+                        <p className="text-xs text-neutral-500">
+                            💡 Keep it to 2-3 sentences. Focus on your unique value and target role.
+                        </p>
+                    </>
+                )}
             </div>
         )
     }
@@ -1291,51 +1410,107 @@ function SectionEditor({ section, onUpdate }: { section: ResumeSection, onUpdate
         return (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Edit Skills</h3>
-                    <div className="flex gap-2">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={async () => {
-                                const enhanced = await handleEnhance(skillsText, "skills", "ats");
-                                if (enhanced) {
-                                    onUpdate(enhanced.split(",").map((s: string) => s.trim()).filter(Boolean));
-                                }
-                            }}
-                            disabled={enhancing}
-                            title="Optimize for ATS"
-                        >
-                            ATS
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={async () => {
-                                const enhanced = await handleEnhance(skillsText, "skills");
-                                if (enhanced) {
-                                    onUpdate(enhanced.split(",").map((s: string) => s.trim()).filter(Boolean));
-                                }
-                            }}
-                            disabled={enhancing}
-                        >
-                            {enhancing ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Sparkles className="w-3 h-3 mr-2" />}
-                            Expand
-                        </Button>
-                    </div>
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-amber-400" />
+                        Edit Skills
+                    </h3>
                 </div>
-                <p className="text-xs text-neutral-500">Comma separated. Include technical skills, tools, and soft skills.</p>
-                <textarea
-                    className="w-full h-24 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    value={skillsText}
-                    onChange={(e) => onUpdate(e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean))}
-                    placeholder="JavaScript, React, Node.js, Python, AWS, Docker, CI/CD, Agile, Team Leadership..."
-                />
-                {skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                        {skills.filter(Boolean).map((skill, i) => (
-                            <span key={i} className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs">{skill}</span>
-                        ))}
+
+                {/* AI Generation Prompt */}
+                {(!skills || skills.length === 0) && (
+                    <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-lg p-4">
+                        <div className="flex items-start gap-3 mb-3">
+                            <Sparkles className="w-5 h-5 text-amber-400 mt-0.5" />
+                            <div>
+                                <h4 className="text-sm font-semibold text-amber-300 mb-1">How would you like to add skills?</h4>
+                                <p className="text-xs text-neutral-400">AI can extract skills from your experience</p>
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <button
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance("Generate relevant skills based on experience", "skills");
+                                    if (enhanced) {
+                                        onUpdate(enhanced.split(",").map((s: string) => s.trim()).filter(Boolean));
+                                    }
+                                }}
+                                disabled={enhancing}
+                                className="w-full text-left px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg transition-all group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-amber-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Generate from Experience</span>
+                                    </div>
+                                    {enhancing ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <span className="text-xs text-amber-400 group-hover:translate-x-1 transition-transform">→</span>}
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1 ml-6">AI will analyze your experience and suggest skills</p>
+                            </button>
+                            <button
+                                onClick={() => onUpdate(["JavaScript", "React", "Node.js"])}
+                                className="w-full text-left px-4 py-3 bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 rounded-lg transition-all group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Zap className="w-4 h-4 text-neutral-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Add Manually</span>
+                                    </div>
+                                    <span className="text-xs text-neutral-400 group-hover:translate-x-1 transition-transform">→</span>
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1 ml-6">Type your skills separated by commas</p>
+                            </button>
+                        </div>
                     </div>
+                )}
+
+                {/* Skills Editor */}
+                {skills && skills.length > 0 && (
+                    <>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance(skillsText, "skills", "ats");
+                                    if (enhanced) {
+                                        onUpdate(enhanced.split(",").map((s: string) => s.trim()).filter(Boolean));
+                                    }
+                                }}
+                                disabled={enhancing}
+                                title="Optimize for ATS"
+                            >
+                                ATS
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance(skillsText, "skills");
+                                    if (enhanced) {
+                                        onUpdate(enhanced.split(",").map((s: string) => s.trim()).filter(Boolean));
+                                    }
+                                }}
+                                disabled={enhancing}
+                            >
+                                {enhancing ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Sparkles className="w-3 h-3 mr-2" />}
+                                Expand
+                            </Button>
+                        </div>
+                        <p className="text-xs text-neutral-500">Comma separated. Include technical skills, tools, and soft skills.</p>
+                        <textarea
+                            className="w-full h-24 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            value={skillsText}
+                            onChange={(e) => onUpdate(e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean))}
+                            placeholder="JavaScript, React, Node.js, Python, AWS, Docker, CI/CD, Agile, Team Leadership..."
+                        />
+                        {skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {skills.filter(Boolean).map((skill, i) => (
+                                    <span key={i} className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs">{skill}</span>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         )
@@ -1475,56 +1650,62 @@ function SectionEditor({ section, onUpdate }: { section: ResumeSection, onUpdate
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Edit Projects</h3>
-                    <Button 
-                        variant="premium" 
-                        size="sm"
-                        onClick={async () => {
-                            setEnhancing(true);
-                            try {
-                                // Get experience and skills for context
-                                const experienceSection = resume?.sections.find(s => s.type === "experience");
-                                const skillsSection = resume?.sections.find(s => s.type === "skills");
-                                const experience = experienceSection?.content as ExperienceEntry[] | undefined;
-                                const skills = skillsSection?.content as string[] | undefined;
-                                
-                                const prompt = `Based on this professional background, generate 2-3 relevant projects:
-
-Experience: ${experience?.map(e => `${e.role} at ${e.company}`).join(", ") || "General professional"}
-Skills: ${skills?.join(", ") || "Various technical skills"}
-${resume?.jobDescription ? `Target Job: ${resume.jobDescription}` : ""}
-
-Generate projects that:
-1. Demonstrate the skills mentioned
-2. Are relevant to the target job
-3. Have measurable outcomes
-4. Use technologies from the skills list
-
-Return JSON: {"projects": [{"name": "Project Name", "description": "Brief description with tech stack", "bullets": ["Achievement 1", "Achievement 2"]}]}`;
-
-                                const res = await fetch("/api/generate", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ prompt, jobDescription: resume?.jobDescription })
-                                });
-                                const data = await res.json();
-                                if (data.data?.projects) {
-                                    onUpdate(data.data.projects);
-                                    toast.success("Projects generated based on your experience!");
-                                }
-                            } catch {
-                                toast.error("Failed to generate projects");
-                            }
-                            setEnhancing(false);
-                        }}
-                        disabled={enhancing}
-                        className="text-xs"
-                    >
-                        {enhancing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
-                        AI Generate
-                    </Button>
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-emerald-400" />
+                        Edit Projects
+                    </h3>
                 </div>
-                {projects.map((project, idx) => (
+
+                {/* AI Generation Prompt */}
+                {(!projects || projects.length === 0) && (
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                            <Sparkles className="w-5 h-5 text-emerald-400 mt-0.5" />
+                            <div>
+                                <h4 className="text-sm font-semibold text-emerald-300 mb-1">How would you like to add projects?</h4>
+                                <p className="text-xs text-neutral-400">Showcase your best work or let AI suggest relevant projects</p>
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <button
+                                onClick={async () => {
+                                    const enhanced = await handleEnhance("Generate relevant project ideas", "projects");
+                                    if (enhanced) {
+                                        // Try to parse AI response into project format
+                                        onUpdate([{ name: "Project 1", description: enhanced, bullets: [] }]);
+                                    }
+                                }}
+                                disabled={enhancing}
+                                className="w-full text-left px-4 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 rounded-lg transition-all group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Generate Project Ideas</span>
+                                    </div>
+                                    {enhancing ? <Loader2 className="w-4 h-4 animate-spin text-emerald-400" /> : <span className="text-xs text-emerald-400 group-hover:translate-x-1 transition-transform">→</span>}
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1 ml-6">AI will suggest relevant projects based on your field</p>
+                            </button>
+                            <button
+                                onClick={() => onUpdate([{ name: "Project Name", description: "Project description", bullets: ["Key feature 1", "Key feature 2"] }])}
+                                className="w-full text-left px-4 py-3 bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 rounded-lg transition-all group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Plus className="w-4 h-4 text-neutral-400" />
+                                        <span className="text-sm font-medium text-neutral-200">Add My Own Projects</span>
+                                    </div>
+                                    <span className="text-xs text-neutral-400 group-hover:translate-x-1 transition-transform">→</span>
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1 ml-6">Manually enter your project details</p>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Projects Editor */}
+                {projects && projects.length > 0 && projects.map((project, idx) => (
                     <div key={idx} className="bg-neutral-800 p-4 rounded-lg border border-neutral-700">
                         <Input 
                             placeholder="Project Name" 
@@ -1587,9 +1768,11 @@ Return JSON: {"projects": [{"name": "Project Name", "description": "Brief descri
                         </Button>
                     </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => onUpdate([...projects, { name: "Project Name", description: "Description", bullets: [] }])}>
-                    + Add Project
-                </Button>
+                {projects && projects.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => onUpdate([...projects, { name: "Project Name", description: "Description", bullets: [] }])}>
+                        + Add Project
+                    </Button>
+                )}
             </div>
         )
     }
@@ -1670,51 +1853,7 @@ Return JSON: {"projects": [{"name": "Project Name", "description": "Brief descri
         const certs = section.content as { name: string; issuer: string; date?: string; url?: string }[];
         return (
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Edit Certifications</h3>
-                    <Button 
-                        variant="premium" 
-                        size="sm"
-                        onClick={async () => {
-                            setEnhancing(true);
-                            try {
-                                const skillsSection = resume?.sections.find(s => s.type === "skills");
-                                const skills = skillsSection?.content as string[] | undefined;
-                                
-                                const prompt = `Suggest 2-3 relevant industry certifications for this profile:
-
-Skills: ${skills?.join(", ") || "General technical skills"}
-${resume?.jobDescription ? `Target Job: ${resume.jobDescription}` : ""}
-
-Return only REAL certifications (AWS, Google, Microsoft, CompTIA, etc.) that are:
-1. Relevant to the skills and target job
-2. Industry-recognized
-3. Commonly required for similar roles
-
-Return JSON: {"certifications": [{"name": "Certification Name", "issuer": "Issuing Organization", "date": "2024"}]}`;
-
-                                const res = await fetch("/api/generate", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ prompt, jobDescription: resume?.jobDescription })
-                                });
-                                const data = await res.json();
-                                if (data.data?.certifications) {
-                                    onUpdate(data.data.certifications);
-                                    toast.success("Certifications suggested based on your skills!");
-                                }
-                            } catch {
-                                toast.error("Failed to generate certifications");
-                            }
-                            setEnhancing(false);
-                        }}
-                        disabled={enhancing}
-                        className="text-xs"
-                    >
-                        {enhancing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
-                        AI Suggest
-                    </Button>
-                </div>
+                <h3 className="font-bold text-lg">Edit Certifications</h3>
                 {certs.map((cert, idx) => (
                     <div key={idx} className="bg-neutral-800 p-4 rounded-lg border border-neutral-700">
                         <div className="grid grid-cols-2 gap-2 mb-2">

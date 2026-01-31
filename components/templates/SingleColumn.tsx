@@ -12,19 +12,19 @@ export function SingleColumnTemplate({ resume }: { resume: Resume }) {
     const education = resume.sections.find(s => s.type === "education")?.content as EducationEntry[] | undefined;
 
     return (
-        <div className="bg-white text-black p-8 h-full min-h-[11in] shadow-lg font-sans text-sm leading-relaxed" id="resume-preview">
+        <div className="bg-white text-black p-8 h-full min-h-[11in] shadow-lg font-sans text-sm leading-relaxed overflow-hidden" id="resume-preview">
             {/* Header */}
             <header className="border-b-2 border-black pb-4 mb-6">
-                <h1 className="text-3xl font-bold uppercase tracking-wider mb-1">
+                <h1 className="text-3xl font-bold uppercase tracking-wider mb-2 break-words">
                     {contact?.fullName || "YOUR NAME"}
                 </h1>
-                <div className="text-gray-600 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                    {contact?.email && <span>{contact.email}</span>}
+                <div className="text-gray-600 flex flex-wrap gap-x-4 gap-y-1 text-xs break-words">
+                    {contact?.email && <span className="break-all">{contact.email}</span>}
                     {contact?.phone && <><span>•</span><span>{contact.phone}</span></>}
                     {contact?.location && <><span>•</span><span>{contact.location}</span></>}
-                    {contact?.linkedin && <><span>•</span><a href={contact.linkedin} className="text-blue-600 hover:underline">LinkedIn</a></>}
-                    {contact?.github && <><span>•</span><a href={contact.github} className="text-blue-600 hover:underline">GitHub</a></>}
-                    {contact?.portfolio && <><span>•</span><a href={contact.portfolio} className="text-blue-600 hover:underline">Portfolio</a></>}
+                    {contact?.linkedin && <><span>•</span><a href={contact.linkedin} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">LinkedIn</a></>}
+                    {contact?.github && <><span>•</span><a href={contact.github} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">GitHub</a></>}
+                    {contact?.portfolio && <><span>•</span><a href={contact.portfolio} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">Portfolio</a></>}
                     {!contact && (
                         <>
                             <span>email@example.com</span>
@@ -40,7 +40,7 @@ export function SingleColumnTemplate({ resume }: { resume: Resume }) {
             {/* Summary */}
             {summary && (
                 <section className="mb-6">
-                    <h2 className="font-bold text-lg uppercase border-b border-gray-300 mb-2">Summary</h2>
+                    <h2 className="font-bold text-base uppercase mb-2 pb-1 border-b border-gray-400">Summary</h2>
                     <p>{summary}</p>
                 </section>
             )}
@@ -48,19 +48,19 @@ export function SingleColumnTemplate({ resume }: { resume: Resume }) {
             {/* Skills */}
             {skills && skills.length > 0 && (
                 <section className="mb-6">
-                    <h2 className="font-bold text-lg uppercase border-b border-gray-300 mb-2">Skills</h2>
-                    <div className="flex flex-wrap gap-2">
+                    <h2 className="font-bold text-base uppercase mb-2 pb-1 border-b border-gray-400">Skills</h2>
+                    <ul className="list-disc list-outside ml-5 flex flex-wrap gap-x-6 gap-y-1">
                         {skills.map((skill, i) => (
-                            <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs font-semibold">{skill}</span>
+                            <li key={i} className="text-xs" style={{ flexBasis: 'calc(20% - 1.5rem)', minWidth: 'fit-content' }}>{skill}</li>
                         ))}
-                    </div>
+                    </ul>
                 </section>
             )}
 
             {/* Experience */}
             {experience && experience.length > 0 && (
                 <section className="mb-6">
-                    <h2 className="font-bold text-lg uppercase border-b border-gray-300 mb-2">Experience</h2>
+                    <h2 className="font-bold text-base uppercase mb-2 pb-1 border-b border-gray-400">Experience</h2>
                     <div className="space-y-4">
                         {experience.map((exp, i) => (
                             <div key={i}>
@@ -70,7 +70,7 @@ export function SingleColumnTemplate({ resume }: { resume: Resume }) {
                                 </div>
                                 <div className="text-gray-700 italic mb-1">{exp.company}</div>
                                 <ul className="list-disc list-outside ml-4 space-y-1">
-                                    {exp.bullets?.map((b, j) => (
+                                    {exp.bullets?.slice(0, 4).map((b, j) => (
                                         <li key={j}>{b}</li>
                                     ))}
                                 </ul>
@@ -83,16 +83,16 @@ export function SingleColumnTemplate({ resume }: { resume: Resume }) {
             {/* Projects */}
             {projects && projects.length > 0 && (
                 <section className="mb-6">
-                    <h2 className="font-bold text-lg uppercase border-b border-gray-300 mb-2">Projects</h2>
+                    <h2 className="font-bold text-base uppercase mb-2 pb-1 border-b border-gray-400">Projects</h2>
                     <div className="space-y-3">
                         {projects.map((proj, i) => (
                             <div key={i}>
                                 <div className="font-bold">{proj.name}</div>
-                                <p className="text-gray-700">{proj.description}</p>
+                                {proj.description && <p className="text-gray-700 text-xs italic">{proj.description}</p>}
                                 {proj.bullets && proj.bullets.length > 0 && (
                                     <ul className="list-disc list-outside ml-4 space-y-1 mt-1">
-                                        {proj.bullets.map((b, j) => (
-                                            <li key={j}>{b}</li>
+                                        {proj.bullets.slice(0, 3).map((b, j) => (
+                                            <li key={j} className="text-sm">{b}</li>
                                         ))}
                                     </ul>
                                 )}
@@ -105,7 +105,7 @@ export function SingleColumnTemplate({ resume }: { resume: Resume }) {
             {/* Education */}
             {education && education.length > 0 && (
                 <section className="mb-6">
-                    <h2 className="font-bold text-lg uppercase border-b border-gray-300 mb-2">Education</h2>
+                    <h2 className="font-bold text-base uppercase mb-2 pb-1 border-b border-gray-400">Education</h2>
                     <div className="space-y-3">
                         {education.map((edu, i) => (
                             <div key={i}>

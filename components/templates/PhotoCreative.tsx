@@ -37,8 +37,8 @@ export function PhotoCreativeTemplate({ resume }: { resume: Resume }) {
                         {contact?.email && <p className="flex items-center gap-2"><span>✉</span> {contact.email}</p>}
                         {contact?.phone && <p className="flex items-center gap-2"><span>☎</span> {contact.phone}</p>}
                         {contact?.location && <p className="flex items-center gap-2"><span>📍</span> {contact.location}</p>}
-                        {contact?.linkedin && <p className="flex items-center gap-2"><span>🔗</span> LinkedIn</p>}
-                        {contact?.github && <p className="flex items-center gap-2"><span>💻</span> GitHub</p>}
+                        {contact?.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline"><span>🔗</span> LinkedIn</a>}
+                        {contact?.github && <a href={contact.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline"><span>💻</span> GitHub</a>}
                     </div>
                 </section>
 

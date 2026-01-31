@@ -36,7 +36,7 @@ export function PhotoProfessionalTemplate({ resume }: { resume: Resume }) {
                         {contact?.email && <span>Email: {contact.email}</span>}
                         {contact?.phone && <span>Phone: {contact.phone}</span>}
                         {contact?.location && <span>Location: {contact.location}</span>}
-                        {contact?.linkedin && <span>LinkedIn: Available</span>}
+                        {contact?.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="hover:underline">LinkedIn: Available</a>}
                     </div>
                 </div>
             </header>

@@ -40,8 +40,8 @@ export function PhotoModernTemplate({ resume }: { resume: Resume }) {
                             {contact?.location && <span>📍 {contact.location}</span>}
                         </div>
                         <div className="mt-1 flex gap-3 text-sm text-blue-200">
-                            {contact?.linkedin && <span>LinkedIn</span>}
-                            {contact?.github && <span>GitHub</span>}
+                            {contact?.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="hover:underline">LinkedIn</a>}
+                            {contact?.github && <a href={contact.github} target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a>}
                             {contact?.portfolio && <span>Portfolio</span>}
                         </div>
                     </div>
