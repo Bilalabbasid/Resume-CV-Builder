@@ -23,7 +23,7 @@ export default function CreateResume() {
     const [file, setFile] = useState<File | null>(null);
     const [jdAnalysis, setJdAnalysis] = useState<JDAnalysis | null>(null);
     const [analyzingJD, setAnalyzingJD] = useState(false);
-    const [selectedTemplate, setSelectedTemplate] = useState("modern-2024");
+    const [selectedTemplate, setSelectedTemplate] = useState("canva-minimalist"); // Default to Canva-style minimalist template
     
     // Contact info state
     const [contactInfo, setContactInfo] = useState<ContactInfo>({

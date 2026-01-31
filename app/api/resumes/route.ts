@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { ContactInfo } from "@/types/resume";
+import { ContactInfo, Resume } from "@/types/resume";
+
+// Helper to map database fields to Resume interface
+// Handles missing columns gracefully
+function mapDbToResume(dbData: Record<string, unknown>): Resume {
+    return {
+        id: dbData.id as string,
+        userId: (dbData.user_id || dbData.userId || "anonymous") as string,
+        title: (dbData.title || "Untitled Resume") as string,
+        templateId: (dbData.template_id || dbData.templateId || "modern-2024") as string,
+        sections: (dbData.sections as Resume["sections"]) || [],
+        jobDescription: (dbData.job_description || dbData.jobDescription) as string | undefined,
+        atsScore: (dbData.ats_score || dbData.atsScore) as number | undefined,
+        createdAt: dbData.created_at ? new Date(dbData.created_at as string) : new Date(),
+        updatedAt: dbData.updated_at ? new Date(dbData.updated_at as string) : new Date(),
+    };
+}
 
 export async function GET() {
     const { data, error } = await supabase
@@ -13,7 +29,10 @@ export async function GET() {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    // Map database fields to Resume interface
+    const mappedData = data?.map(mapDbToResume) || [];
+
+    return NextResponse.json({ data: mappedData });
 }
 
 export async function POST(req: NextRequest) {
@@ -44,35 +63,30 @@ export async function POST(req: NextRequest) {
             .insert([
                 {
                     title,
-                    user_id: userId || "demo-user",
-                    template_id: templateId || "single-column",
+                    user_id: userId || "anonymous",
+                    template_id: templateId || "modern-2024",
                     sections: initialSections,
                     job_description: jobDescription || null,
+                    is_ai_generated: true
                 },
             ])
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error("Supabase insert error:", JSON.stringify(error, null, 2));
+            throw new Error(error.message || error.code || "Database insert failed");
+        }
 
-        return NextResponse.json({ data });
+        console.log("Resume created successfully:", data.id);
+        
+        // Map to Resume interface for consistent response
+        const mappedData = mapDbToResume(data);
+        return NextResponse.json({ data: mappedData });
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        console.warn("Database Error (POST):", errorMessage);
-        console.warn("Activating DEMO MODE for creation.");
-
-        // DEMO MODE: Return a mock created resume
-        const demoId = "demo-" + Math.random().toString(36).substring(7);
-        return NextResponse.json({
-            data: {
-                id: demoId,
-                title: "Demo Resume (Offline)",
-                template_id: "single-column",
-                sections: [],
-                user_id: "demo-user",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            }
-        });
+        console.error("Database Error (POST):", errorMessage);
+        console.error("Full error:", err);
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

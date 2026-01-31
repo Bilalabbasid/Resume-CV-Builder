@@ -26,6 +26,7 @@ import { SidebarTemplate } from "@/components/templates/Sidebar";
 import { PhotoModernTemplate } from "@/components/templates/PhotoModern";
 import { PhotoCreativeTemplate } from "@/components/templates/PhotoCreative";
 import { PhotoProfessionalTemplate } from "@/components/templates/PhotoProfessional";
+import { CanvaMinimalistTemplate } from "@/components/templates/CanvaMinimalist";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Save, Download, ArrowLeft, Plus, Trash, Undo2, Redo2, Eye, EyeOff, Palette, Keyboard, Sparkles, Target, FileText, User, Mail, Phone, MapPin, Linkedin, Github, Globe, Zap, TrendingUp, AlertCircle, CheckCircle2, Camera, X } from "lucide-react";
@@ -62,12 +63,26 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
             try {
                 const res = await fetch(`/api/resumes/${resumeId}`);
                 const json = await res.json();
+                
+                if (json.error) {
+                    toast.error(json.error);
+                    setLoading(false);
+                    return;
+                }
+                
                 if (json.data) {
-                    setResume(json.data);
-                    setHistory([json.data]);
+                    // API now returns properly mapped Resume object
+                    const resumeData: Resume = {
+                        ...json.data,
+                        createdAt: new Date(json.data.createdAt),
+                        updatedAt: new Date(json.data.updatedAt)
+                    };
+                    
+                    setResume(resumeData);
+                    setHistory([resumeData]);
                     setHistoryIndex(0);
                     // Set first section as active if exists
-                    if (json.data.sections.length > 0) setActiveTab(json.data.sections[0].id);
+                    if (resumeData.sections.length > 0) setActiveTab(resumeData.sections[0].id);
                 }
             } catch (e) {
                 console.error(e);
@@ -103,16 +118,24 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
         if (!resume) return;
         setSaving(true);
         try {
-            await fetch(`/api/resumes/${resumeId}`, {
+            const res = await fetch(`/api/resumes/${resumeId}`, {
                 method: "PATCH",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sections: resume.sections, templateId: resume.templateId })
             });
+            
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || "Failed to save");
+            }
+            
             if (!silent) {
                 toast.success("Resume saved successfully!");
             }
         } catch (e) {
             console.error("Save failed", e);
-            toast.error("Failed to save resume");
+            const errorMsg = e instanceof Error ? e.message : "Failed to save resume";
+            toast.error(errorMsg);
         } finally {
             setSaving(false);
         }
@@ -484,6 +507,8 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
         { id: "acad-1", name: "Academic", color: "bg-green-600", category: "Professional" },
         { id: "start-1", name: "Startup", color: "bg-orange-500", category: "Creative" },
         { id: "fin-1", name: "Finance", color: "bg-emerald-700", category: "Professional" },
+        // Canva-style
+        { id: "canva-minimalist", name: "Minimalist CV", color: "bg-gray-900", category: "ATS" },
     ];
 
     return (
@@ -1024,6 +1049,8 @@ export default function EditorLayout({ resumeId }: { resumeId: string }) {
                         {resume.templateId === "photo-modern" && <PhotoModernTemplate resume={resume} />}
                         {resume.templateId === "photo-creative" && <PhotoCreativeTemplate resume={resume} />}
                         {resume.templateId === "photo-professional" && <PhotoProfessionalTemplate resume={resume} />}
+                        {/* Canva-style Templates */}
+                        {resume.templateId === "canva-minimalist" && <CanvaMinimalistTemplate resume={resume} />}
                     </div>
                 </div>
             )}
@@ -1447,7 +1474,56 @@ function SectionEditor({ section, onUpdate }: { section: ResumeSection, onUpdate
         const projects = section.content as ProjectEntry[];
         return (
             <div className="space-y-6">
-                <h3 className="font-bold text-lg">Edit Projects</h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg">Edit Projects</h3>
+                    <Button 
+                        variant="premium" 
+                        size="sm"
+                        onClick={async () => {
+                            setEnhancing(true);
+                            try {
+                                // Get experience and skills for context
+                                const experienceSection = resume?.sections.find(s => s.type === "experience");
+                                const skillsSection = resume?.sections.find(s => s.type === "skills");
+                                const experience = experienceSection?.content as ExperienceEntry[] | undefined;
+                                const skills = skillsSection?.content as string[] | undefined;
+                                
+                                const prompt = `Based on this professional background, generate 2-3 relevant projects:
+
+Experience: ${experience?.map(e => `${e.role} at ${e.company}`).join(", ") || "General professional"}
+Skills: ${skills?.join(", ") || "Various technical skills"}
+${resume?.jobDescription ? `Target Job: ${resume.jobDescription}` : ""}
+
+Generate projects that:
+1. Demonstrate the skills mentioned
+2. Are relevant to the target job
+3. Have measurable outcomes
+4. Use technologies from the skills list
+
+Return JSON: {"projects": [{"name": "Project Name", "description": "Brief description with tech stack", "bullets": ["Achievement 1", "Achievement 2"]}]}`;
+
+                                const res = await fetch("/api/generate", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ prompt, jobDescription: resume?.jobDescription })
+                                });
+                                const data = await res.json();
+                                if (data.data?.projects) {
+                                    onUpdate(data.data.projects);
+                                    toast.success("Projects generated based on your experience!");
+                                }
+                            } catch {
+                                toast.error("Failed to generate projects");
+                            }
+                            setEnhancing(false);
+                        }}
+                        disabled={enhancing}
+                        className="text-xs"
+                    >
+                        {enhancing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                        AI Generate
+                    </Button>
+                </div>
                 {projects.map((project, idx) => (
                     <div key={idx} className="bg-neutral-800 p-4 rounded-lg border border-neutral-700">
                         <Input 
@@ -1594,7 +1670,51 @@ function SectionEditor({ section, onUpdate }: { section: ResumeSection, onUpdate
         const certs = section.content as { name: string; issuer: string; date?: string; url?: string }[];
         return (
             <div className="space-y-6">
-                <h3 className="font-bold text-lg">Edit Certifications</h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg">Edit Certifications</h3>
+                    <Button 
+                        variant="premium" 
+                        size="sm"
+                        onClick={async () => {
+                            setEnhancing(true);
+                            try {
+                                const skillsSection = resume?.sections.find(s => s.type === "skills");
+                                const skills = skillsSection?.content as string[] | undefined;
+                                
+                                const prompt = `Suggest 2-3 relevant industry certifications for this profile:
+
+Skills: ${skills?.join(", ") || "General technical skills"}
+${resume?.jobDescription ? `Target Job: ${resume.jobDescription}` : ""}
+
+Return only REAL certifications (AWS, Google, Microsoft, CompTIA, etc.) that are:
+1. Relevant to the skills and target job
+2. Industry-recognized
+3. Commonly required for similar roles
+
+Return JSON: {"certifications": [{"name": "Certification Name", "issuer": "Issuing Organization", "date": "2024"}]}`;
+
+                                const res = await fetch("/api/generate", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ prompt, jobDescription: resume?.jobDescription })
+                                });
+                                const data = await res.json();
+                                if (data.data?.certifications) {
+                                    onUpdate(data.data.certifications);
+                                    toast.success("Certifications suggested based on your skills!");
+                                }
+                            } catch {
+                                toast.error("Failed to generate certifications");
+                            }
+                            setEnhancing(false);
+                        }}
+                        disabled={enhancing}
+                        className="text-xs"
+                    >
+                        {enhancing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                        AI Suggest
+                    </Button>
+                </div>
                 {certs.map((cert, idx) => (
                     <div key={idx} className="bg-neutral-800 p-4 rounded-lg border border-neutral-700">
                         <div className="grid grid-cols-2 gap-2 mb-2">

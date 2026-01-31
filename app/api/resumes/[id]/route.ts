@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { Resume } from "@/types/resume";
+
+// Helper to map database fields to Resume interface
+function mapDbToResume(dbData: Record<string, unknown>): Resume {
+    return {
+        id: dbData.id as string,
+        userId: dbData.user_id as string,
+        title: dbData.title as string,
+        templateId: dbData.template_id as string,
+        sections: (dbData.sections as Resume["sections"]) || [],
+        jobDescription: dbData.job_description as string | undefined,
+        atsScore: dbData.ats_score as number | undefined,
+        createdAt: dbData.created_at ? new Date(dbData.created_at as string) : new Date(),
+        updatedAt: dbData.updated_at ? new Date(dbData.updated_at as string) : new Date(),
+    };
+}
 
 export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
     const { id } = await context.params;
@@ -15,11 +31,14 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data });
+    // Map database fields to Resume interface
+    const mappedData = mapDbToResume(data);
+    return NextResponse.json({ data: mappedData });
 }
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
     const { id } = await context.params;
+    
     try {
         const body = await req.json() as Record<string, unknown>;
 
@@ -46,7 +65,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
             throw new Error(error.message);
         }
 
-        return NextResponse.json({ data });
+        // Map database fields to Resume interface
+        const mappedData = mapDbToResume(data);
+        return NextResponse.json({ data: mappedData });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Update failed";
         console.error("Database Error (PATCH):", message);

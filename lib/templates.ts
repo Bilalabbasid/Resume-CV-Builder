@@ -234,6 +234,18 @@ export const TEMPLATES: TemplateMeta[] = [
         category: "Professional",
         color: "bg-emerald-700"
     },
+    // Canva-style Template
+    {
+        id: "canva-minimalist",
+        name: "Minimalist CV",
+        description: "Black and white minimalist CV. Clean, professional, ATS-friendly.",
+        thumbnail: "preview-minimal",
+        category: "ATS-Friendly",
+        popular: true,
+        new: true,
+        color: "bg-gray-900",
+        hasPhoto: true
+    },
 ];
 
 export function getTemplate(id: string) {

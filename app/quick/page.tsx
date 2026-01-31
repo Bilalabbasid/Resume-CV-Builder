@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +102,7 @@ export default function QuickResumePage() {
         }
         
         setLoading(true);
+        let createdResumeId: string | null = null;
         
         try {
             // Build the AI prompt from minimal input
@@ -161,6 +162,7 @@ IMPORTANT INSTRUCTIONS:
                 ...(aiData.data.projects ? [{ id: crypto.randomUUID(), type: "projects", content: aiData.data.projects, order: 4 }] : []),
                 ...(education.degree ? [{ id: crypto.randomUUID(), type: "education", content: [education], order: 5 }] : 
                     aiData.data.education ? [{ id: crypto.randomUUID(), type: "education", content: aiData.data.education, order: 5 }] : []),
+                ...(aiData.data.certifications ? [{ id: crypto.randomUUID(), type: "certifications", content: aiData.data.certifications, order: 6 }] : []),
             ];
             
             // Create in database
@@ -177,54 +179,49 @@ IMPORTANT INSTRUCTIONS:
             const createData = await createRes.json();
             
             if (createData.error) throw new Error(createData.error);
+            if (!createData.data?.id) throw new Error("No resume ID returned");
             
-            // Update with sections
-            await fetch(`/api/resumes/${createData.data.id}`, {
+            // Store the resume ID immediately
+            createdResumeId = createData.data.id;
+            console.log("Resume created with ID:", createdResumeId);
+            
+            // Update with sections in database
+            const updateRes = await fetch(`/api/resumes/${createdResumeId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sections, jobDescription })
             });
             
+            if (!updateRes.ok) {
+                const updateError = await updateRes.json();
+                throw new Error(`Failed to save resume sections: ${updateError.error}`);
+            }
+            
+            console.log("Resume sections saved successfully");
+            
             // Calculate match score
             const matchScore = calculateMatchScore(aiData.data.skills || [], jdAnalysis?.requiredSkills || []);
+            
+            // Update state and navigate to result
             setJdMatchScore(matchScore);
-            setResumeId(createData.data.id);
+            setResumeId(createdResumeId);
             setStep("result");
             
             toast.success("Resume generated! 🎉");
             
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to generate resume");
+            console.error("Resume generation error:", error);
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
     
-    // Auto-select template based on JD
+    // Auto-select template based on JD - using Canva-style minimalist template
     const selectTemplate = (analysis: JDAnalysis | null): string => {
-        if (!analysis) return "modern-2024";
-        
-        const role = analysis.role.toLowerCase();
-        const industry = analysis.industry.toLowerCase();
-        
-        if (role.includes("engineer") || role.includes("developer") || industry.includes("tech")) {
-            return "tech-1";
-        }
-        if (role.includes("designer") || role.includes("creative") || industry.includes("design")) {
-            return "creative";
-        }
-        if (role.includes("executive") || role.includes("director") || analysis.seniority === "executive") {
-            return "exec-1";
-        }
-        if (industry.includes("finance") || industry.includes("banking")) {
-            return "fin-1";
-        }
-        if (analysis.seniority === "senior" || analysis.seniority === "lead") {
-            return "corporate";
-        }
-        
-        return "modern-2024";
+        // Default to Canva-style minimalist template for all roles
+        return "canva-minimalist";
     };
     
     // Calculate match score
@@ -554,14 +551,27 @@ We are looking for a Senior Software Engineer to join our team. You will be resp
                                 Review & Edit Resume
                             </Button>
                             
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                onClick={() => window.open(`/api/export/${resumeId}`, '_blank')}
-                            >
-                                <Download className="w-5 h-5 mr-2" />
-                                Download PDF
-                            </Button>
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="flex-1"
+                                    onClick={() => window.open(`/api/export/${resumeId}`, '_blank')}
+                                >
+                                    <Download className="w-5 h-5 mr-2" />
+                                    Download PDF
+                                </Button>
+                                
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="flex-1"
+                                    onClick={() => window.open(`/api/export-docx/${resumeId}`, '_blank')}
+                                >
+                                    <FileText className="w-5 h-5 mr-2" />
+                                    Download DOCX
+                                </Button>
+                            </div>
 
                             <Button
                                 variant="ghost"
@@ -570,14 +580,27 @@ We are looking for a Senior Software Engineer to join our team. You will be resp
                                     setJobDescription("");
                                     setJdAnalysis(null);
                                     setResumeId(null);
+                                    // Reset form
+                                    setFullName("");
+                                    setEmail("");
+                                    setPhone("");
+                                    setLinkedin("");
+                                    setExperiences([{ company: "", role: "", years: "" }]);
+                                    setEducation({ degree: "", school: "", year: "" });
+                                    setKeyAchievements("");
                                 }}
                             >
                                 Create Another Resume
                             </Button>
                         </div>
 
+                        {/* Resume ID for reference */}
+                        <div className="mt-6 text-xs text-neutral-600">
+                            Resume ID: {resumeId}
+                        </div>
+
                         {/* Trust indicators */}
-                        <div className="mt-10 flex justify-center gap-6 text-xs text-neutral-500">
+                        <div className="mt-6 flex justify-center gap-6 text-xs text-neutral-500">
                             <span className="flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3 text-green-500" />
                                 ATS-Optimized

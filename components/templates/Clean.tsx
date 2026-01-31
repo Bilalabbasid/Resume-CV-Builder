@@ -1,4 +1,4 @@
-import { Resume, ContactInfo, ExperienceEntry, ProjectEntry, EducationEntry } from "@/types/resume";
+import { Resume, ContactInfo, ExperienceEntry, ProjectEntry, EducationEntry, CertificationEntry } from "@/types/resume";
 
 export function CleanTemplate({ resume }: { resume: Resume }) {
     if (!resume) return null;
@@ -9,6 +9,7 @@ export function CleanTemplate({ resume }: { resume: Resume }) {
     const experience = resume.sections.find(s => s.type === "experience")?.content as ExperienceEntry[] | undefined;
     const projects = resume.sections.find(s => s.type === "projects")?.content as ProjectEntry[] | undefined;
     const education = resume.sections.find(s => s.type === "education")?.content as EducationEntry[] | undefined;
+    const certifications = resume.sections.find(s => s.type === "certifications")?.content as CertificationEntry[] | undefined;
 
     return (
         <div className="bg-white text-gray-800 h-full min-h-[11in] font-sans p-10" id="resume-preview">
@@ -89,11 +90,20 @@ export function CleanTemplate({ resume }: { resume: Resume }) {
                     <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 pb-2 border-b border-gray-200">
                         Projects
                     </h2>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {projects.map((proj, i) => (
                             <div key={i}>
                                 <h3 className="font-semibold text-gray-900">{proj.name}</h3>
                                 <p className="text-gray-600 text-sm">{proj.description}</p>
+                                {proj.bullets && proj.bullets.length > 0 && (
+                                    <ul className="mt-1 space-y-1">
+                                        {proj.bullets.map((bullet, j) => (
+                                            <li key={j} className="text-gray-600 text-sm pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-gray-400">
+                                                {bullet}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -135,6 +145,22 @@ export function CleanTemplate({ resume }: { resume: Resume }) {
                     </section>
                 )}
             </div>
+
+            {/* Certifications */}
+            {certifications && certifications.length > 0 && (
+                <section className="mt-6">
+                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 pb-2 border-b border-gray-200">
+                        Certifications
+                    </h2>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {certifications.map((cert, i) => (
+                            <span key={i} className="text-gray-700 text-sm">
+                                {cert.name} {cert.issuer && `(${cert.issuer})`} {cert.date && `• ${cert.date}`}
+                            </span>
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
     );
 }
