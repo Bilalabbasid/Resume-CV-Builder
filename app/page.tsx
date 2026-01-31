@@ -65,11 +65,6 @@ export default function Home() {
         <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] -z-10" />
 
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in-up">
-            <Sparkles className="w-4 h-4 text-yellow-400" />
-            <span className="text-sm font-medium text-neutral-300">Powered by Gemini 2.5 AI</span>
-          </div>
-
           <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-8 leading-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
             Paste Job Description <br />
             <span className="text-purple-500">Get Perfect Resume</span>
